@@ -10,10 +10,28 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.align = "center",
                       fig.path = "../figures/01_DADA2")
 ```
-
+# Set the seed 
+```{r set-seed}
+# any number can be chosen
+set.seed(238428)
+```
 # Symbolically link out data files
 
 We need to have access to our fastq files for our project
+```
+cd SalinityGradient_16S
+mkdir data
+cd data
+mkdir 01_DADA2
+cd 01_DADA2
+mkdir 01_raw_gzipped_fastqs
+
+# Now, let's run a for loop to symbolically link the data! 
+for FILE in `ls /workdir/in_class_data/raw_gzipped_seqs/*.fastq.gz`
+  do
+  ln -s $FILE /workdir/<your_netID>/SalinityGradient_16S/data/01_DADA2/01_raw_gzipped_fastqs/
+  done
+```
 
 # Goals of this file:
 
@@ -33,3 +51,77 @@ Output that we need:
 1. ASV count table: `otu_table`
 2. 
 3. 
+
+# Load R libraries
+```{r load-libraries}
+#Efficiently load w/ pacman
+pacman::p_load(tidyverse, dada2, phyloseq, DT, devtools, install = FALSE)
+```
+
+# Load in raw seq. data
+```{r load-data}
+#set the path
+raw_fastqs_path <- "data/01_DADA2/01_raw_gzipped_fastqs"
+raw_fastqs_path
+
+#what files are in the path?
+head(list.files(raw_fastqs_path))
+
+#how many are there?
+length(list.files(raw_fastqs_path))
+
+#create vector of forward reads (R1)
+forward_reads <- list.files(raw_fastqs_path, pattern = "R1_001.fastq.gz", full.names = TRUE)
+
+#create vector of reverse reads (R2)
+reverse_reads <- list.files(raw_fastqs_path, pattern = "R2_001.fastq.gz", full.names = TRUE)
+
+#intuition check
+stopifnot(length(forward_reads) < length(list.files(raw_fastqs_path)))
+stopifnot(length(reverse_reads) < length(list.files(raw_fastqs_path)))
+stopifnot(length(forward_reads) == length(reverse_reads))
+
+```
+
+
+# Visualize/inspect seq. data to assess read quality
+Lets see the quality of the raw reads *BEFORE* we trim our sequences
+```{r raw-quality-plot, fig.width=12, fig.height=8}
+#randomly select 12 samples
+random_samples <- sample(1:length(reverse_reads), size = 12)
+random_samples
+
+# Calculate and plot the quality of these 12 samples
+
+#forward quality plot
+forward_filtered_qual_plot_12 <-
+  plotQualityProfile(forward_reads[random_samples]) +
+  labs(title = "Forward Reads: Raw Quality")
+#reverse quality plot
+reverse_filtered_qual_plot_12 <-
+  plotQualityProfile(reverse_reads[random_samples]) +
+  labs(title = "Reverse Reads: Raw Quality")
+
+# put the two plots together
+forward_filtered_qual_plot_12 + reverse_filtered_qual_plot_12
+```
+
+**[INSERT AN INTERPRETATION OF F AND R QUALITY PLOTS]**
+
+# Filter by quality and trim  primers from seq. data
+```{r prep-filtered-sequences}
+# Create vector of sample names from file
+sample_names <- sapply(strsplit(basename(forward_reads), "_"), `[`, 1)
+head(sample_names)
+
+```
+## Prepare a placeholder for filtered reads
+## Filter adn trim reads
+
+# Wrute out new fastq files w/ high quality and trimmed sequences
+
+# Reinspect quality of new reads (intuition check)
+
+
+
+
